@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:todogo/core/theme/colors.dart';
+import 'package:todogo/features/todo/presentation/common/dialog/confirm_delete_dialog.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -195,7 +196,17 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           height: 60,
           child: FloatingActionButton(
             backgroundColor: AppColors.primary,
-            onPressed: () {},
+            onPressed: () async {
+              final result = await showDialog<bool>(
+                context: context,
+                builder: (context) => const ConfirmDeleteDialog(),
+              );
+
+              if (result == true) {
+                // Handle the delete action
+                print('Item deleted');
+              }
+            },
             shape: const CircleBorder(),
             child: SvgPicture.asset(
               'assets/icons/plus.svg',
