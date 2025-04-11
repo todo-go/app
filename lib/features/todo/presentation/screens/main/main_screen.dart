@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:todogo/core/theme/colors.dart';
 import 'package:todogo/features/todo/presentation/common/dialog/confirm_delete_dialog.dart';
+import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:todogo/features/todo/data/models/todo_model.dart';
+import 'package:intl/intl.dart';
+import 'package:todogo/features/todo/presentation/screens/calendar/calendar_screen.dart';
+import 'package:todogo/features/todo/presentation/widgets/todo_item_widget.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -18,6 +24,8 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     return DateTime.now().add(Duration(days: index));
   });
 
+  Map<String, List<TodoModel>> _todoMapByDate = {};
+
   @override
   void initState() {
     super.initState();
@@ -32,7 +40,26 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
     );
 
-    _animationController.forward();
+    Future.delayed(const Duration(milliseconds: 500), () {
+      _animationController.forward();
+    });
+
+    _loadTodos();
+  }
+
+  Future<void> _loadTodos() async {
+    final String jsonStr = await rootBundle.loadString(
+      'assets/json/todos_sample.json',
+    );
+    final List<dynamic> data = json.decode(jsonStr);
+    final todos = data.map((e) => TodoModel.fromJson(e)).toList();
+
+    // Group todos by date
+    setState(() {
+      for (final todo in todos) {
+        _todoMapByDate.putIfAbsent(todo.date, () => []).add(todo);
+      }
+    });
   }
 
   @override
@@ -53,7 +80,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
         backgroundColor: Colors.white,
         title: Padding(
           padding: const EdgeInsets.only(top: 60),
-          child: const Column(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
@@ -65,7 +92,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                 ),
               ),
               Text(
-                '화요일, 4월 8일',
+                DateFormat('EEEE, M월 d일', 'ko_KR').format(DateTime.now()),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
@@ -75,10 +102,26 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
             ],
           ),
         ),
-        actions: const [
+        actions: [
           Padding(
             padding: EdgeInsets.only(top: 60, right: 16),
-            child: Icon(Icons.calendar_month, color: AppColors.primary),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CalendarScreen()),
+                );
+              },
+              child: SvgPicture.asset(
+                'assets/icons/calendar.svg',
+                width: 24,
+                height: 24,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.primary,
+                  BlendMode.srcIn,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -141,44 +184,39 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: List.generate(
-                _dates.length,
-                (index) => ListView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  children: [
-                    buildTodoItem(
-                      title: '운동하러가기',
-                      subtitle: '헬스장 마감 전에 가기',
-                      isDone: true,
-                    ),
-                    buildTodoItem(
-                      title: '아침 산책하기',
-                      subtitle: '가볍게 걷고 기분 전환하기',
-                      isDone: true,
-                    ),
-                    buildTodoItem(
-                      title: '책 한 챕터 읽기',
-                      subtitle: '어제 읽던 부분부터 이어서',
-                    ),
-                    buildTodoItem(
-                      title: '카페 가서 작업하기',
-                      subtitle: '집중할 수 있는 음악 플레이리스트 틀기',
-                    ),
-                    buildTodoItem(
-                      title: '친구에게 연락하기',
-                      subtitle: '너무 오랜만이라 어색할 수도...',
-                    ),
-                    buildTodoItem(
-                      title: '자기 전 명상 10분',
-                      subtitle: '하루를 정리하고 마음을 가라앉히기',
-                    ),
-                    buildTodoItem(title: '냉장고 정리하기', subtitle: '유통기한 지난 거 버리기'),
-                  ],
-                ),
-              ),
+              children: List.generate(_dates.length, (index) {
+                final dateKey =
+                    _dates[index].toIso8601String().split('T').first;
+                final todos = _todoMapByDate[dateKey] ?? [];
+
+                if (todos.isEmpty) {
+                  return const Column(
+                    children: [
+                      SizedBox(height: 250),
+                      Text(
+                        '오늘 할 일이 없어요!',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  );
+                }
+
+                return ListView.builder(
+                  itemCount: todos.length,
+                  itemBuilder: (context, i) {
+                    final todo = todos[i];
+                    return TodoItemWidget(
+                      title: todo.title,
+                      subtitle: todo.subtitle,
+                      isDone: todo.isCompleted,
+                    );
+                  },
+                );
+              }),
             ),
           ),
         ],
@@ -227,56 +265,5 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   String _getWeekday(DateTime date) {
     const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
     return weekdays[date.weekday - 1];
-  }
-
-  Widget buildTodoItem({
-    required String title,
-    required String subtitle,
-    bool isDone = false,
-  }) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Checkbox(
-            value: isDone,
-            onChanged: (_) {},
-            activeColor: AppColors.primary,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    decoration: isDone ? TextDecoration.lineThrough : null,
-                    color: isDone ? Colors.grey : Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDone ? Colors.grey : AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Icon(Icons.delete, color: Colors.black87),
-        ],
-      ),
-    );
   }
 }
