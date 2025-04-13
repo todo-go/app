@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:todogo/core/theme/colors.dart';
+import 'package:todogo/features/todo/presentation/screens/add/todo_add_screen.dart';
 import 'package:todogo/features/todo/presentation/widgets/todo_item_widget.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
@@ -54,12 +56,31 @@ class _CalendarScreenState extends State<CalendarScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         scrolledUnderElevation: 0,
+        leadingWidth: 50,
+        toolbarHeight: 100,
         leading: IconButton(
           onPressed: () {
             Navigator.pop(context);
           },
           icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.primary),
         ),
+        actions: [
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => TodoAddScreen()),
+              );
+            },
+            child: SvgPicture.asset(
+              'assets/icons/file-edit.svg',
+              colorFilter: ColorFilter.mode(AppColors.primary, BlendMode.srcIn),
+              width: 24,
+              height: 24,
+            ),
+          ),
+          SizedBox(width: 16),
+        ],
       ),
       body: Column(
         children: [
@@ -77,6 +98,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   _focusedDay = focusedDay; // update focusedDay as well
                 });
               },
+              eventLoader: (day) {
+                final dateKey = day.toIso8601String().split('T').first;
+                return _todoMapByDate[dateKey] ?? [];
+              },
               calendarStyle: CalendarStyle(
                 todayDecoration: BoxDecoration(
                   color: AppColors.primaryLight,
@@ -87,6 +112,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   shape: BoxShape.circle,
                 ),
                 weekendTextStyle: TextStyle(color: Colors.red),
+                markerDecoration: BoxDecoration(
+                  color: AppColors.success,
+                  shape: BoxShape.circle,
+                ),
               ),
               headerStyle: HeaderStyle(formatButtonVisible: false),
             ),
