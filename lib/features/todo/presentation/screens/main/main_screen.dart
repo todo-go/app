@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:todogo/core/theme/colors.dart';
-import 'package:todogo/features/todo/presentation/common/dialog/confirm_delete_dialog.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:todogo/features/todo/data/models/todo_model.dart';
 import 'package:intl/intl.dart';
+import 'package:todogo/features/todo/presentation/screens/add/todo_add_screen.dart';
 import 'package:todogo/features/todo/presentation/screens/calendar/calendar_screen.dart';
 import 'package:todogo/features/todo/presentation/widgets/todo_item_widget.dart';
 
@@ -76,7 +76,6 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       appBar: AppBar(
         toolbarHeight: 150,
         centerTitle: false,
-        elevation: 0,
         backgroundColor: Colors.white,
         title: Padding(
           padding: const EdgeInsets.only(top: 60),
@@ -234,16 +233,11 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           height: 60,
           child: FloatingActionButton(
             backgroundColor: AppColors.primary,
-            onPressed: () async {
-              final result = await showDialog<bool>(
-                context: context,
-                builder: (context) => const ConfirmDeleteDialog(),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => TodoAddScreen()),
               );
-
-              if (result == true) {
-                // Handle the delete action
-                print('Item deleted');
-              }
             },
             shape: const CircleBorder(),
             child: SvgPicture.asset(
