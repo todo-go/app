@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:todogo/core/theme/colors.dart';
 import 'package:todogo/features/todo/presentation/common/dialog/confirm_delete_dialog.dart';
@@ -10,6 +11,8 @@ class TodoAddScreen extends StatefulWidget {
 }
 
 class _TodoAddScreenState extends State<TodoAddScreen> {
+  final TextEditingController titleController = TextEditingController();
+  final TextEditingController contectController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,7 +43,92 @@ class _TodoAddScreenState extends State<TodoAddScreen> {
           ),
         ),
       ),
-      body: Center(child: Text("추가")),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  TextField(
+                    style: TextStyle(fontSize: 24),
+                    decoration: InputDecoration(
+                      hintText: '제목을 작성하세요',
+                      hintStyle: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      border: InputBorder.none,
+                      counterText: '',
+                    ),
+                    maxLength: 10,
+                    cursorColor: AppColors.textSecondary,
+                  ),
+
+                  TextField(
+                    style: TextStyle(fontSize: 18),
+                    decoration: InputDecoration(
+                      hintText: '내용을 작성하세요',
+                      hintStyle: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      border: InputBorder.none,
+                    ),
+                    maxLines: null,
+                    maxLength: 50,
+                    onSubmitted: (value) {},
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.done,
+                  ),
+                  SizedBox(height: 150),
+                ],
+              ),
+            ),
+          ),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: () {},
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                AppColors.primary, // Set the button color
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Text(
+                            "일정 추가하기",
+                            style: TextStyle(
+                              color: AppColors.background,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).viewInsets.bottom > 0 ? 20 : 80,
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
