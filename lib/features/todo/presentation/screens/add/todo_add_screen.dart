@@ -24,17 +24,19 @@ class _TodoAddScreenState extends State<TodoAddScreen> {
         leading: Padding(
           padding: EdgeInsets.only(top: 60),
           child: GestureDetector(
-            // onPressed: () {
-            //   Navigator.pop(context);
-            // },
             onTap: () async {
-              final result = await showDialog<bool>(
-                context: context,
-                builder: (context) => const ConfirmDeleteDialog(),
-              );
+              if (titleController.text.isNotEmpty ||
+                  contectController.text.isNotEmpty) {
+                final result = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => const ConfirmDeleteDialog(),
+                );
 
-              if (result == true) {
-                print('Item deleted');
+                if (result == true) {
+                  print('Item deleted');
+                } else {
+                  Navigator.pop(context);
+                }
               } else {
                 Navigator.pop(context);
               }
@@ -51,6 +53,7 @@ class _TodoAddScreenState extends State<TodoAddScreen> {
               child: Column(
                 children: [
                   TextField(
+                    controller: titleController,
                     style: TextStyle(fontSize: 24),
                     decoration: InputDecoration(
                       hintText: '제목을 작성하세요',
@@ -67,6 +70,7 @@ class _TodoAddScreenState extends State<TodoAddScreen> {
                   ),
 
                   TextField(
+                    controller: contectController,
                     style: TextStyle(fontSize: 18),
                     decoration: InputDecoration(
                       hintText: '내용을 작성하세요',
