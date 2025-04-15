@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:todogo/core/theme/colors.dart';
 import 'package:todogo/features/todo/presentation/common/dialog/confirm_delete_dialog.dart';
@@ -13,6 +12,26 @@ class TodoAddScreen extends StatefulWidget {
 class _TodoAddScreenState extends State<TodoAddScreen> {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController contectController = TextEditingController();
+  final FocusNode titleFocusNode = FocusNode();
+  final FocusNode contentFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusScope.of(context).requestFocus(titleFocusNode);
+    });
+  }
+
+  @override
+  void dispose() {
+    titleController.dispose();
+    contectController.dispose();
+    titleFocusNode.dispose();
+    contentFocusNode.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,6 +73,7 @@ class _TodoAddScreenState extends State<TodoAddScreen> {
                 children: [
                   TextField(
                     controller: titleController,
+                    focusNode: titleFocusNode,
                     style: TextStyle(fontSize: 24),
                     decoration: InputDecoration(
                       hintText: '제목을 작성하세요',
@@ -67,10 +87,15 @@ class _TodoAddScreenState extends State<TodoAddScreen> {
                     ),
                     maxLength: 10,
                     cursorColor: AppColors.textSecondary,
+                    textInputAction: TextInputAction.next,
+                    onSubmitted: (value) {
+                      // Move focus to the content field
+                      FocusScope.of(context).requestFocus(contentFocusNode);
+                    },
                   ),
-
                   TextField(
                     controller: contectController,
+                    focusNode: contentFocusNode,
                     style: TextStyle(fontSize: 18),
                     decoration: InputDecoration(
                       hintText: '내용을 작성하세요',
@@ -83,7 +108,6 @@ class _TodoAddScreenState extends State<TodoAddScreen> {
                     ),
                     maxLines: null,
                     maxLength: 50,
-                    onSubmitted: (value) {},
                     keyboardType: TextInputType.multiline,
                     textInputAction: TextInputAction.done,
                   ),
