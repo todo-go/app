@@ -2,7 +2,7 @@ name: todogo
 description: "투두고 - 하루 일정을 간단히 관리하세요!"
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.0
 
 environment:
   sdk: ^3.7.2
@@ -16,6 +16,9 @@ dependencies:
   flutter_svg: ^2.0.17
   intl: ^0.20.2
   table_calendar: ^3.2.0
+  shared_preferences: ^2.5.3
+  webview_flutter: ^4.10.0
+  package_info_plus: ^8.3.0
 
 dev_dependencies:
   flutter_test:
@@ -26,6 +29,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - .env
     - assets/images/
     - assets/icons/
     - assets/json/
