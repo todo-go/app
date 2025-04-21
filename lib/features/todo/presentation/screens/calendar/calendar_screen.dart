@@ -69,7 +69,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => TodoAddScreen()),
+                MaterialPageRoute(
+                  builder:
+                      (context) => TodoAddScreen(selectedDate: _selectedDay),
+                ),
               );
             },
             child: SvgPicture.asset(

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todogo/core/theme/colors.dart';
+import 'package:todogo/features/auth/presentation/screens/login_screen.dart';
 import 'package:todogo/features/todo/presentation/screens/main/main_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -13,11 +15,23 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 3), () {
+    _checkUuidAndNavigate();
+  }
+
+  Future<void> _checkUuidAndNavigate() async {
+    final prefs = await SharedPreferences.getInstance();
+    final uuid = prefs.getString('uuid');
+
+    // Navigate based on the presence of uuid
+    if (uuid != null) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const MainScreen()),
       );
-    });
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    }
   }
 
   @override

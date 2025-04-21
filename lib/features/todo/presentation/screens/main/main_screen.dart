@@ -74,6 +74,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         toolbarHeight: 150,
         centerTitle: false,
         backgroundColor: Colors.white,
@@ -173,7 +174,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
               dividerHeight: 1,
               dividerColor: AppColors.background,
               labelPadding: const EdgeInsets.symmetric(
-                horizontal: 24,
+                horizontal: 15,
                 vertical: 5,
               ),
             ),
@@ -234,9 +235,14 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           child: FloatingActionButton(
             backgroundColor: AppColors.primary,
             onPressed: () {
+              final selectedDate = _dates[_tabController.index];
+
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => TodoAddScreen()),
+                MaterialPageRoute(
+                  builder:
+                      (context) => TodoAddScreen(selectedDate: selectedDate),
+                ),
               );
             },
             shape: const CircleBorder(),

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:todogo/core/theme/colors.dart';
 import 'package:todogo/features/todo/presentation/common/dialog/confirm_delete_dialog.dart';
 
 class TodoAddScreen extends StatefulWidget {
-  const TodoAddScreen({super.key});
+  final DateTime selectedDate;
+  const TodoAddScreen({required this.selectedDate, super.key});
 
   @override
   State<TodoAddScreen> createState() => _TodoAddScreenState();
@@ -34,6 +36,9 @@ class _TodoAddScreenState extends State<TodoAddScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final formattedDate = DateFormat(
+      'yyyy년 MM월 dd일',
+    ).format(widget.selectedDate);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -71,6 +76,7 @@ class _TodoAddScreenState extends State<TodoAddScreen> {
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
+                  Text(formattedDate),
                   TextField(
                     controller: titleController,
                     focusNode: titleFocusNode,
