@@ -4,7 +4,7 @@ class TodoModel {
   final String title;
   final String description;
   final String deadline;
-  final bool status;
+  bool status;
 
   TodoModel({
     required this.userId,

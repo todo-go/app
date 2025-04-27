@@ -204,6 +204,9 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                       title: todo.title,
                       subtitle: todo.description,
                       isDone: todo.status,
+                      deadline: todo.deadline,
+                      userId: todo.userId,
+                      taskId: todo.taskNumber,
                       onDelete: () async {
                         final url = Uri.parse(
                           '${dotenv.env['API_URL']}/api/users/${todo.userId}/tasks/${todo.taskNumber}',
@@ -233,6 +236,11 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                             SnackBar(content: Text('삭제 중 오류 발생: $e')),
                           );
                         }
+                      },
+                      onStatusChanged: (newStatus) {
+                        setState(() {
+                          todo.status = newStatus;
+                        });
                       },
                     );
                   },

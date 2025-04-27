@@ -1,19 +1,64 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:todogo/core/theme/colors.dart';
 
 class TodoItemWidget extends StatelessWidget {
   final String title;
   final String subtitle;
   final bool isDone;
+  final String deadline;
+  final int userId;
+  final int taskId;
   final VoidCallback onDelete;
+  final ValueChanged<bool> onStatusChanged;
 
   const TodoItemWidget({
     Key? key,
     required this.title,
     required this.subtitle,
-    this.isDone = false,
+    required this.isDone,
+    required this.deadline,
+    required this.userId,
+    required this.taskId,
     required this.onDelete,
+    required this.onStatusChanged,
   }) : super(key: key);
+
+  Future<void> _updateStatus(BuildContext context, bool newStatus) async {
+    final url = Uri.parse(
+      '${dotenv.env['API_URL']}/api/users/$userId/tasks/$taskId',
+    );
+
+    final body = {
+      "title": title,
+      "description": subtitle,
+      "deadline": deadline,
+      "status": newStatus,
+      "userId": userId,
+    };
+
+    try {
+      final response = await http.put(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        onStatusChanged(newStatus);
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('상태 업데이트 실패: ${response.body}')));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('상태 업데이트 중 오류 발생: $e')));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +72,7 @@ class TodoItemWidget extends StatelessWidget {
         child: const Icon(Icons.delete, color: Colors.white),
       ),
       onDismissed: (direction) {
-        onDelete(); // Call the delete callback
+        onDelete();
       },
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 6),
@@ -40,7 +85,11 @@ class TodoItemWidget extends StatelessWidget {
           children: [
             Checkbox(
               value: isDone,
-              onChanged: (_) {},
+              onChanged: (value) {
+                if (value != null) {
+                  _updateStatus(context, value);
+                }
+              },
               activeColor: AppColors.primary,
             ),
             const SizedBox(width: 8),
