@@ -170,7 +170,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                 });
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('${todo.title}가 삭제되었습니다.'),
+                                    content: Text('${todo.title}가 삭제되었습니다'),
                                   ),
                                 );
                               } else {
