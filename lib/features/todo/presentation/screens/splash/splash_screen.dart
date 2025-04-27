@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todogo/core/theme/colors.dart';
 import 'package:todogo/features/auth/presentation/screens/login_screen.dart';
@@ -41,9 +42,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _loadTodosFromApi(String uuid) async {
-    final url = Uri.parse(
-      'http://todogo-env.eba-n7q4attf.ap-northeast-2.elasticbeanstalk.com/api/tasks/user/$uuid',
-    );
+    final url = Uri.parse('${dotenv.env['API_URL']}/api/tasks/user/$uuid');
     try {
       final response = await http.get(url);
 

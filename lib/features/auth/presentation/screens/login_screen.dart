@@ -1,9 +1,8 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:todogo/core/theme/colors.dart';
 import 'package:todogo/features/auth/data/auth_service.dart';
-import 'package:todogo/features/auth/presentation/screens/privacy_policy_screen.dart';
 import 'package:todogo/features/todo/presentation/screens/main/main_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -53,9 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<Map<String, dynamic>> _loadTodosFromApi(String uuid) async {
-    final url = Uri.parse(
-      'http://todogo-env.eba-n7q4attf.ap-northeast-2.elasticbeanstalk.com/api/tasks/user/$uuid',
-    );
+    final url = Uri.parse('${dotenv.env['API_URL']}/api/tasks/user/$uuid');
     try {
       final response = await http.get(url);
 
