@@ -22,10 +22,11 @@ class AuthService {
       if (response.statusCode == 201) {
         final data = jsonDecode(response.body);
         final uuid = data['uuid'];
+        final id = data['id'].toString();
 
-        // Save uuid to shared_preferences
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('uuid', uuid);
+        await prefs.setString('id', id);
       } else {
         throw Exception('Failed to register user: ${response.body}');
       }
