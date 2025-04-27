@@ -1,10 +1,12 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:todogo/core/theme/colors.dart';
 import 'package:todogo/features/auth/data/auth_service.dart';
-import 'package:todogo/features/auth/presentation/screens/privacy_policy_screen.dart';
 import 'package:todogo/features/todo/presentation/screens/main/main_screen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -25,14 +27,52 @@ class _LoginScreenState extends State<LoginScreen> {
         _phoneController.text,
         _nameController.text,
       );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const MainScreen()),
-      );
+
+      final prefs = await SharedPreferences.getInstance();
+      final uuid = prefs.getString('uuid');
+
+      if (uuid != null) {
+        final preloadedData = await _loadTodosFromApi(uuid);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MainScreen(preloadedData: preloadedData),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('사용자 정보를 불러올 수 없습니다.')));
+      }
     } catch (e) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Registration failed: $e')));
+    }
+  }
+
+  Future<Map<String, dynamic>> _loadTodosFromApi(String uuid) async {
+    final url = Uri.parse('${dotenv.env['API_URL']}/api/tasks/user/$uuid');
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
+        final Map<String, List<dynamic>> groupedData = {};
+
+        for (final item in data) {
+          final dateKey = item['deadline'].split('T').first;
+          groupedData.putIfAbsent(dateKey, () => []).add(item);
+        }
+
+        return groupedData;
+      } else {
+        print('Failed to load todos: ${response.body}');
+        return {};
+      }
+    } catch (e) {
+      print('Error loading todos from API: $e');
+      return {};
     }
   }
 
@@ -45,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _getVersion() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
     setState(() {
-      _version = '${packageInfo.version}'; // Get the version from pubspec.yaml
+      _version = '${packageInfo.version}';
     });
   }
 
@@ -55,21 +95,21 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: AppColors.background,
       body: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SizedBox(height: 200),
+              const SizedBox(height: 200),
               Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.check_circle_outline,
                       color: AppColors.primary,
                       size: 100,
                     ),
-                    Text(
+                    const Text(
                       '투두고',
                       style: TextStyle(
                         fontSize: 34,
@@ -77,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: AppColors.primary,
                       ),
                     ),
-                    Text(
+                    const Text(
                       '하루 일정을 간단히 관리하세요!',
                       style: TextStyle(
                         fontSize: 14,
@@ -88,24 +128,29 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               TextField(
                 controller: _nameController,
-                style: TextStyle(fontSize: 14),
+                style: const TextStyle(fontSize: 14),
                 decoration: InputDecoration(
                   hintText: '닉네임',
-                  hintStyle: TextStyle(
+                  hintStyle: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10.0),
-                    borderSide: BorderSide(color: AppColors.textSecondary),
+                    borderSide: const BorderSide(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10.0),
-                    borderSide: BorderSide(width: 1, color: AppColors.primary),
+                    borderSide: const BorderSide(
+                      width: 1,
+                      color: AppColors.primary,
+                    ),
                   ),
                   fillColor: Colors.white,
                   counterText: '',
@@ -114,25 +159,30 @@ class _LoginScreenState extends State<LoginScreen> {
                 cursorColor: AppColors.primary,
                 textInputAction: TextInputAction.next,
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               TextField(
                 controller: _phoneController,
-                style: TextStyle(fontSize: 14),
+                style: const TextStyle(fontSize: 14),
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
                   hintText: '전화번호 (예: 01012341234)',
-                  hintStyle: TextStyle(
+                  hintStyle: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10.0),
-                    borderSide: BorderSide(color: AppColors.textSecondary),
+                    borderSide: const BorderSide(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10.0),
-                    borderSide: BorderSide(width: 1, color: AppColors.primary),
+                    borderSide: const BorderSide(
+                      width: 1,
+                      color: AppColors.primary,
+                    ),
                   ),
                   fillColor: Colors.white,
                   counterText: '',
@@ -141,75 +191,19 @@ class _LoginScreenState extends State<LoginScreen> {
                 cursorColor: AppColors.primary,
                 textInputAction: TextInputAction.next,
               ),
-              SizedBox(height: 10),
-              Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.zero, // Remove padding
-                    child: Checkbox(
-                      activeColor: AppColors.primary,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: const VisualDensity(
-                        horizontal: VisualDensity.minimumDensity,
-                        vertical: VisualDensity.minimumDensity,
-                      ),
-                      value: true, // You can manage this state with a variable
-                      onChanged: (bool? value) {
-                        // Handle checkbox state change
-                      },
-                    ),
-                  ),
-                  SizedBox(width: 5),
-                  Expanded(
-                    child: RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: '개인정보 수집 및 이용에 동의합니다. ',
-                            style: TextStyle(color: Colors.black),
-                          ),
-                          TextSpan(
-                            text: '보기',
-                            style: TextStyle(
-                              color: Colors.black,
-                              decoration: TextDecoration.underline,
-                            ),
-                            recognizer:
-                                TapGestureRecognizer()
-                                  ..onTap = () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder:
-                                            (context) => PrivacyPolicyScreen(
-                                              url:
-                                                  'https://melon-hammer-751.notion.site/1d924e64ed2c809c9fb9dee53dfca45b',
-                                            ),
-                                      ),
-                                    );
-                                  },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: () {
-                    _registerAndNavigate();
-                  },
+                  onPressed: _registerAndNavigate,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary, // Set the button color
+                    backgroundColor: AppColors.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: Text(
+                  child: const Text(
                     "투두고 시작하기!",
                     style: TextStyle(
                       color: AppColors.background,
@@ -224,7 +218,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Text(
                     "ver. $_version",
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: AppColors.primary,
                       fontSize: 14,
                       fontWeight: FontWeight.bold,

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todogo/core/theme/colors.dart';
 import 'package:todogo/features/auth/presentation/screens/login_screen.dart';
 import 'package:todogo/features/todo/presentation/screens/main/main_screen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -12,25 +15,54 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  Map<String, dynamic> _loadedData = {};
+
   @override
   void initState() {
     super.initState();
-    _checkUuidAndNavigate();
+    _checkUuidAndLoadData();
   }
 
-  Future<void> _checkUuidAndNavigate() async {
+  Future<void> _checkUuidAndLoadData() async {
     final prefs = await SharedPreferences.getInstance();
     final uuid = prefs.getString('uuid');
 
-    // Navigate based on the presence of uuid
     if (uuid != null) {
+      await _loadTodosFromApi(uuid);
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const MainScreen()),
+        MaterialPageRoute(
+          builder: (context) => MainScreen(preloadedData: _loadedData),
+        ),
       );
     } else {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
+    }
+  }
+
+  Future<void> _loadTodosFromApi(String uuid) async {
+    final url = Uri.parse('${dotenv.env['API_URL']}/api/tasks/user/$uuid');
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
+        final Map<String, List<dynamic>> groupedData = {};
+
+        for (final item in data) {
+          final dateKey = item['deadline'].split('T').first;
+          groupedData.putIfAbsent(dateKey, () => []).add(item);
+        }
+
+        setState(() {
+          _loadedData = groupedData;
+        });
+      } else {
+        print('Failed to load todos: ${response.body}');
+      }
+    } catch (e) {
+      print('Error loading todos from API: $e');
     }
   }
 

@@ -1,14 +1,19 @@
-import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
 import 'package:todogo/core/theme/colors.dart';
 import 'package:todogo/features/todo/presentation/common/dialog/confirm_delete_dialog.dart';
 
 class TodoAddScreen extends StatefulWidget {
   final DateTime selectedDate;
-  const TodoAddScreen({required this.selectedDate, super.key});
+
+  const TodoAddScreen({Key? key, required this.selectedDate}) : super(key: key);
 
   @override
-  State<TodoAddScreen> createState() => _TodoAddScreenState();
+  _TodoAddScreenState createState() => _TodoAddScreenState();
 }
 
 class _TodoAddScreenState extends State<TodoAddScreen> {
@@ -34,6 +39,41 @@ class _TodoAddScreenState extends State<TodoAddScreen> {
     super.dispose();
   }
 
+  Future<void> _addTodo() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('id');
+    if (userId == null) return;
+
+    final url = Uri.parse('${dotenv.env['API_URL']}/api/tasks');
+    final body = {
+      "title": titleController.text,
+      "description": contectController.text,
+      "deadline": widget.selectedDate.toIso8601String(),
+      "status": false,
+      "userId": int.parse(userId),
+    };
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 201) {
+        Navigator.pop(context, true);
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('추가 실패: ${response.body}')));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('추가 중 오류 발생: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final formattedDate = DateFormat(
@@ -45,6 +85,7 @@ class _TodoAddScreenState extends State<TodoAddScreen> {
         toolbarHeight: 150,
         backgroundColor: Colors.white,
         leadingWidth: 50,
+        title: Text(formattedDate, style: TextStyle(fontSize: 18)),
         leading: Padding(
           padding: EdgeInsets.only(top: 60),
           child: GestureDetector(
@@ -57,8 +98,6 @@ class _TodoAddScreenState extends State<TodoAddScreen> {
                 );
 
                 if (result == true) {
-                  print('Item deleted');
-                } else {
                   Navigator.pop(context);
                 }
               } else {
@@ -76,7 +115,6 @@ class _TodoAddScreenState extends State<TodoAddScreen> {
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  Text(formattedDate),
                   TextField(
                     controller: titleController,
                     focusNode: titleFocusNode,
@@ -95,7 +133,6 @@ class _TodoAddScreenState extends State<TodoAddScreen> {
                     cursorColor: AppColors.textSecondary,
                     textInputAction: TextInputAction.next,
                     onSubmitted: (value) {
-                      // Move focus to the content field
                       FocusScope.of(context).requestFocus(contentFocusNode);
                     },
                   ),
@@ -134,10 +171,9 @@ class _TodoAddScreenState extends State<TodoAddScreen> {
                       child: SizedBox(
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: _addTodo,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                AppColors.primary, // Set the button color
+                            backgroundColor: AppColors.primary,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),

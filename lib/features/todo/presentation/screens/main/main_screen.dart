@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:todogo/core/theme/colors.dart';
-import 'dart:convert';
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:todogo/features/todo/data/models/todo_model.dart';
 import 'package:intl/intl.dart';
 import 'package:todogo/features/todo/presentation/screens/add/todo_add_screen.dart';
 import 'package:todogo/features/todo/presentation/screens/calendar/calendar_screen.dart';
 import 'package:todogo/features/todo/presentation/widgets/todo_item_widget.dart';
+import 'package:todogo/features/todo/data/models/todo_model.dart';
+import 'package:http/http.dart' as http;
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final Map<String, dynamic> preloadedData;
+
+  const MainScreen({required this.preloadedData, super.key});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -24,11 +26,18 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     return DateTime.now().add(Duration(days: index));
   });
 
-  Map<String, List<TodoModel>> _todoMapByDate = {};
+  late Map<String, List<TodoModel>> _todoMapByDate;
 
   @override
   void initState() {
     super.initState();
+    _todoMapByDate = widget.preloadedData.map((key, value) {
+      return MapEntry(
+        key,
+        (value as List).map((e) => TodoModel.fromJson(e)).toList(),
+      );
+    });
+
     _tabController = TabController(length: _dates.length, vsync: this);
 
     _animationController = AnimationController(
@@ -42,23 +51,6 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
 
     Future.delayed(const Duration(milliseconds: 500), () {
       _animationController.forward();
-    });
-
-    _loadTodos();
-  }
-
-  Future<void> _loadTodos() async {
-    final String jsonStr = await rootBundle.loadString(
-      'assets/json/todos_sample.json',
-    );
-    final List<dynamic> data = json.decode(jsonStr);
-    final todos = data.map((e) => TodoModel.fromJson(e)).toList();
-
-    // Group todos by date
-    setState(() {
-      for (final todo in todos) {
-        _todoMapByDate.putIfAbsent(todo.date, () => []).add(todo);
-      }
     });
   }
 
@@ -109,7 +101,11 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => CalendarScreen()),
+                  MaterialPageRoute(
+                    builder:
+                        (context) =>
+                            CalendarScreen(preloadedData: _todoMapByDate),
+                  ),
                 );
               },
               child: SvgPicture.asset(
@@ -179,8 +175,6 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
               ),
             ),
           ),
-
-          // 할 일 리스트
           Expanded(
             child: TabBarView(
               controller: _tabController,
@@ -190,18 +184,15 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                 final todos = _todoMapByDate[dateKey] ?? [];
 
                 if (todos.isEmpty) {
-                  return const Column(
-                    children: [
-                      SizedBox(height: 250),
-                      Text(
-                        '오늘 할 일이 없어요!',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.grey,
-                        ),
+                  return Center(
+                    child: Text(
+                      '오늘 할 일이 없어요!',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.grey,
                       ),
-                    ],
+                    ),
                   );
                 }
 
@@ -211,8 +202,38 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                     final todo = todos[i];
                     return TodoItemWidget(
                       title: todo.title,
-                      subtitle: todo.subtitle,
-                      isDone: todo.isCompleted,
+                      subtitle: todo.description,
+                      isDone: todo.status,
+                      onDelete: () async {
+                        final url = Uri.parse(
+                          '${dotenv.env['API_URL']}/api/users/${todo.userId}/tasks/${todo.taskNumber}',
+                        );
+
+                        try {
+                          final response = await http.delete(url);
+
+                          if (response.statusCode == 200) {
+                            setState(() {
+                              todos.removeAt(i);
+                            });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${todo.title}가 삭제되었습니다.'),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('삭제 실패: ${response.body}'),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('삭제 중 오류 발생: $e')),
+                          );
+                        }
+                      },
                     );
                   },
                 );

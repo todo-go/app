@@ -1,25 +1,28 @@
 class TodoModel {
-  final String id;
+  final int userId;
+  final int taskNumber;
   final String title;
-  final String subtitle;
-  final String date;
-  final bool isCompleted;
+  final String description;
+  final String deadline;
+  final bool status;
 
   TodoModel({
-    required this.id,
+    required this.userId,
+    required this.taskNumber,
     required this.title,
-    required this.subtitle,
-    required this.date,
-    required this.isCompleted,
+    required this.description,
+    required this.deadline,
+    required this.status,
   });
 
   factory TodoModel.fromJson(Map<String, dynamic> json) {
     return TodoModel(
-      id: json['id'],
+      userId: json['userId'],
+      taskNumber: json['taskNumber'],
       title: json['title'],
-      subtitle: json['subtitle'],
-      date: json['date'],
-      isCompleted: json['isCompleted'],
+      description: json['description'],
+      deadline: json['deadline'],
+      status: json['status'],
     );
   }
 }
